@@ -30,19 +30,46 @@ fn save_task(tasks: Vec<Task>){
     fs::write(FILE,data).expect("Failed to write tasks to file");
 }
 
+fn remove_task(title:String , tasks:&mut Vec<Task>){
+    for i in 0..tasks.len(){
+        if tasks[i].title == title {
+            tasks.remove(i);
+            println!("Task '{}' removed successfully!", title);
+            return; 
+        }
+    }
+}
+
 fn main() {
     let result = command!()
-        .arg(arg!(-t --title <TITLE> "This is the title of the task"))
-        .arg(arg!(-d --description <DESCRIPTION> "This is the discription of the task"))
+        .arg(arg!(-t --title [TITLE] "This is the title of the task"))
+        .arg(arg!(-d --description [DESCRIPTION] "This is the discription of the task")).arg(arg!(-r --remove [REMOVE] "This is to remove a task"))
         .get_matches();
 
-    let title = result.get_one::<String>("title").expect("Title is required");
+    let title = match result.get_one::<String>("title"){
+        Some(t)=>t.to_string(),
+        None=>String::from("No title provided")
+    };
+    
     let description = match result.get_one::<String>("description"){
         Some(desc)=> desc.to_string(),
         None => String::from("No description provided"),
     };
+    let remove = match result.get_one::<String>("remove"){
+        Some(r)=>r.to_string(),
+        None=>String::from("No task to remove")
+    };
 
     let mut tasks = load_task();
+
+    if tasks.len() == 0 && remove != "No task to remove"{
+        println!("Error: No tasks available to remove.");
+        return;
+    }else{
+        if remove != "No task to remove" {
+            remove_task(remove,&mut tasks);
+        }
+    }
 
     tasks.push(Task {
         title:title.to_string(),
